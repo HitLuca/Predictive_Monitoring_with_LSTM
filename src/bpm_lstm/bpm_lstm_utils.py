@@ -1,5 +1,6 @@
 import csv
 from datetime import datetime
+
 import numpy as np
 from keras.utils import to_categorical
 
@@ -52,13 +53,13 @@ def _normalize_and_convert_dataset(dataset, additional_features, limits):
     # activity_id, resource_id, time_since_case_start, time_since_last_event, time_since_midnight, day_of_week
     max_activity_id, max_resource_id, max_time_since_case_start, max_time_since_last_event, max_case_length = limits
 
-    dataset[:, :, 2] = dataset[:, :, 2] / (max_time_since_case_start)
+    dataset[:, :, 2] = dataset[:, :, 2] / max_time_since_case_start
     additional_features[:, :, :2] = additional_features[:, :, :2] / np.array([max_time_since_case_start, 86400])
 
     return dataset, additional_features
 
 
-def load_dataset_with_features(log_filepath):
+def load_dataset_with_features(log_filepath, shuffle=True):
     dataset = []
     additional_features = []
 
@@ -105,23 +106,54 @@ def load_dataset_with_features(log_filepath):
     dataset, additional_features = _pad_dataset(dataset, additional_features, limits)
     dataset, additional_features = _normalize_and_convert_dataset(dataset, additional_features, limits)
 
+    if shuffle:
+        shuffled_indexes = np.random.permutation(range(dataset.shape[0]))
+        dataset = dataset[shuffled_indexes]
+        additional_features = additional_features[shuffled_indexes]
+
     return dataset, additional_features, max_activity_id + 1, max_resource_id + 1
 
 
-def build_train_test_datasets(dataset, additional_features, max_activity_id, max_resource_id):
+def build_train_test_datasets(dataset, additional_features, max_activity_id, max_resource_id, test_split):
     # activity_id, resource_id, time_since_case_start
-    X = dataset[:, :-1, :]
-    X = np.concatenate((to_categorical(X[:, :, 0], max_activity_id + 1),
-                        to_categorical(X[:, :, 1], max_resource_id + 1),
-                        X[:, :, 2:]), axis=-1)
+    dataset_elements = [to_categorical(dataset[..., 0], max_activity_id + 1),
+                        to_categorical(dataset[..., 1], max_resource_id + 1),
+                        dataset[..., 2:]]
 
-    # time_since_last_event, time_since_midnight, day_of_week
-    X2 = additional_features[:, :-1, :]
-    X2 = np.concatenate((X2[:, :, :2], to_categorical(X2[:, :, 2], 7),), axis=-1)
+    additional_features = np.concatenate((additional_features[..., :2],
+                                          to_categorical(additional_features[..., 2], 7)), axis=-1)
 
-    Y = dataset[:, 1:, :]
-    Y = [to_categorical(Y[:, :, 0], max_activity_id + 1),
-         to_categorical(Y[:, :, 1], max_resource_id + 1),
-         Y[:, :, 2:]]
+    split_index = int(dataset.shape[0] * test_split)
 
-    return [X, X2], Y
+    X_train = np.concatenate(dataset_elements, axis=-1)[split_index:, :-1]
+    X2_train = additional_features[split_index:, :-1]
+
+    Y_train = [dataset_elements[0][split_index:, 1:], dataset_elements[1][split_index:, 1:],
+               dataset_elements[2][split_index:, 1:]]
+
+    X_test = np.concatenate(dataset_elements, axis=-1)[:split_index, :-1]
+    X2_test = additional_features[:split_index, :-1]
+
+    return ([X_train, X2_train], Y_train), (X_test, X2_test)
+
+
+def discretize_softmax(sample):
+    return np.eye(sample.shape[-1])[np.argmax(sample, 2)]
+
+
+def save_results(output_filepath, model_scores):
+    with open(output_filepath + 'results.csv', 'w') as f:
+        print('validation, accuracy, std', file=f)
+        print('activity_id, %.4f, %.4f' % (
+            float(np.mean(model_scores['validation'][:, 0])), float(np.std(model_scores['validation'][:, 0]))), file=f)
+        print('resource_id, %.4f, %.4f' % (
+            float(np.mean(model_scores['validation'][:, 1])), float(np.std(model_scores['validation'][:, 1]))), file=f)
+        print(', time, mse, std', file=f)
+        print('time, %.4f, %.4f)' % (
+            float(np.mean(model_scores['validation'][:, 2])), float(np.std(model_scores['validation'][:, 2]))), file=f)
+        print(file=f)
+        print('test, nlevenshtein, std', file=f)
+        print('activity_id, %.4f, %.4f' % (
+            float(np.mean(model_scores['test'][:, 0])), float(np.std(model_scores['test'][:, 0]))), file=f)
+        print('resource_id, %.4f, %.4f' % (
+            float(np.mean(model_scores['test'][:, 1])), float(np.std(model_scores['test'][:, 1]))), file=f)

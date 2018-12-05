@@ -6,10 +6,9 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
+tensorflow-gpu = "==1.4.1"
 keras = "==2.1.2"
-matplotlib = "*"
-tensorflow-gpu = "==1.4.0"
-h5py = "*"
+distance = "*"
 scikit-learn = "*"
 
 [requires]
