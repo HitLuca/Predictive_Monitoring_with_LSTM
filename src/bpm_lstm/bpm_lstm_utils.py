@@ -143,17 +143,17 @@ def discretize_softmax(sample):
 
 def save_results(output_filepath, model_scores):
     with open(output_filepath + 'results.csv', 'w') as f:
-        print('validation, accuracy, std', file=f)
-        print('activity_id, %.4f, %.4f' % (
+        print('validation,accuracy,std', file=f)
+        print('activity_id,%.4f,%.4f' % (
             float(np.mean(model_scores['validation'][:, 0])), float(np.std(model_scores['validation'][:, 0]))), file=f)
-        print('resource_id, %.4f, %.4f' % (
+        print('resource_id,%.4f,%.4f' % (
             float(np.mean(model_scores['validation'][:, 1])), float(np.std(model_scores['validation'][:, 1]))), file=f)
-        print(', time, mse, std', file=f)
-        print('time, %.4f, %.4f)' % (
+        print(',time,mse,std', file=f)
+        print('time,%.4f,%.4f' % (
             float(np.mean(model_scores['validation'][:, 2])), float(np.std(model_scores['validation'][:, 2]))), file=f)
         print(file=f)
-        print('test, nlevenshtein, std', file=f)
-        print('activity_id, %.4f, %.4f' % (
+        print('test,nlevenshtein,std', file=f)
+        print('activity_id,%.4f,%.4f' % (
             float(np.mean(model_scores['test'][:, 0])), float(np.std(model_scores['test'][:, 0]))), file=f)
-        print('resource_id, %.4f, %.4f' % (
+        print('resource_id,%.4f,%.4f' % (
             float(np.mean(model_scores['test'][:, 1])), float(np.std(model_scores['test'][:, 1]))), file=f)

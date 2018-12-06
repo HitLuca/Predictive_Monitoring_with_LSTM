@@ -25,8 +25,6 @@ class BPM_LSTM:
         self._test_split = test_split
         self._test_prefix_size = test_prefix_size
 
-        self._initialization_datetime = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
-
     def _build_model(self):
         model_input = Input((self._X_train[0].shape[1:]))
         additional_features_input = Input((self._X_train[1].shape[1:]))
@@ -159,7 +157,7 @@ class BPM_LSTM:
 
     def _create_checkpoints_path(self, fold):
         folder_path = '/'.join(
-            [self._output_filepath, self._model_name, self._log_name, self._initialization_datetime, str(fold), ''])
+            [self._output_filepath, self._model_name, self._log_name, str(fold), ''])
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
         checkpoint_filepath = folder_path + 'model_{epoch:03d}-{val_loss:.3f}.h5'
@@ -167,7 +165,7 @@ class BPM_LSTM:
 
     def _create_logs_path(self, fold):
         folder_path = '/'.join(
-            [self._output_filepath, self._model_name, self._log_name, self._initialization_datetime, str(fold),
+            [self._output_filepath, self._model_name, self._log_name, str(fold),
              self._logs_filepath, ''])
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
@@ -206,6 +204,6 @@ class BPM_LSTM:
         model_scores['validation'] = np.array(model_scores['validation'])
         model_scores['test'] = np.array(model_scores['test'])
 
-        results_filepath = '/'.join([self._output_filepath, self._model_name, self._log_name, self._initialization_datetime, ''])
+        results_filepath = '/'.join([self._output_filepath, self._model_name, self._log_name, ''])
         bpm_lstm_utils.save_results(results_filepath, model_scores)
 
