@@ -126,10 +126,10 @@ def compare_models(models):
 
     for log_name in log_names:
         for model in models:
-            results_filepath = '/'.join(['..', 'outputs', model, log_name, 'results.csv'])
+            results_filepath = '/'.join(['..', 'outputs', 'sequence', model, log_name, 'results.csv'])
             scores[model].append(_parse_scores(results_filepath))
     _plot_scores(scores)
 
 
 if __name__ == "__main__":
-    compare_models(['old_model', 'new_model_v1', 'new_model_v2', 'new_model_v3'])
+    compare_models(['old_model', 'new_model_v1', 'new_model_v2'])

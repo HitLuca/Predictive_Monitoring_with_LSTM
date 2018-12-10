@@ -2,19 +2,17 @@ import distance
 import numpy as np
 from sklearn.model_selection import ShuffleSplit
 
-from bpm_lstm import bpm_lstm_utils
 from bpm_lstm.bpm_lstm_model import BPM_LSTM
-from bpm_lstm.bpm_lstm_utils import save_results
+from bpm_lstm.bpm_lstm_utils import save_results, load_dataset_with_features
 from bpm_lstm.sequence.sequence_models import available_models
 from bpm_lstm.sequence.sequence_utils import discretize_softmax, build_train_test_datasets
 
 
 # noinspection PyAttributeOutsideInit
 class BPM_LSTM_SEQUENCE(BPM_LSTM):
-    def __init__(self, log_name, log_filepath, write_logs, output_filepath='../outputs',
+    def __init__(self, log_name, log_filepath, write_logs, model_name='new_model_v2', output_filepath='../outputs',
                  logs_filepath='logs/', validation_split=0.2, test_split=0.1, test_prefix_size=5):
-        self._model_name = 'new_model_v3'
-        super().__init__(log_name, log_filepath, self._model_name, write_logs, output_filepath,
+        super().__init__(log_name, log_filepath, model_name, write_logs, output_filepath,
                          logs_filepath, validation_split, test_split, test_prefix_size)
         self._model_type = 'sequence'
         self._results_filepath = '/'.join(
@@ -60,7 +58,7 @@ class BPM_LSTM_SEQUENCE(BPM_LSTM):
         return np.mean(test_scores, -1)
 
     def train(self, folds):
-        dataset, additional_features, self._max_activity_id, self._max_resource_id = bpm_lstm_utils.load_dataset_with_features(
+        dataset, additional_features, self._max_activity_id, self._max_resource_id = load_dataset_with_features(
             self._log_filepath, shuffle=True)
 
         (self._X_train, self._Y_train), (self._X_test, self._X2_test) = build_train_test_datasets(

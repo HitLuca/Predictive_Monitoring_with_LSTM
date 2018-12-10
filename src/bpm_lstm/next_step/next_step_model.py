@@ -10,10 +10,9 @@ from bpm_lstm.next_step.next_step_utils import build_train_test_datasets, discre
 
 # noinspection PyAttributeOutsideInit
 class BPM_LSTM_NEXT_STEP(BPM_LSTM):
-    def __init__(self, log_name, log_filepath, write_logs, output_filepath='../outputs',
+    def __init__(self, log_name, log_filepath, write_logs, model_name='new_model_v1', output_filepath='../outputs',
                  logs_filepath='logs/', validation_split=0.2, test_split=0.1, test_prefix_size=5, delete_last=4):
-        self._model_name = 'new_model_v1'
-        super().__init__(log_name, log_filepath, self._model_name, write_logs, output_filepath,
+        super().__init__(log_name, log_filepath, model_name, write_logs, output_filepath,
                          logs_filepath, validation_split, test_split, test_prefix_size)
         self._delete_last = delete_last
         self._model_type = 'next_step'
