@@ -1,5 +1,6 @@
-
-from bpm_lstm.bpm_lstm_model import BPM_LSTM
+from bpm_lstm.next_step.next_step_model import BPM_LSTM_NEXT_STEP
+from bpm_lstm.sequence.sequence_model import BPM_LSTM_SEQUENCE
+from remove_unused_checkpoints import remove_unused_checkpoints
 
 log_names = [
     '10x5_1S',
@@ -25,17 +26,31 @@ log_names = [
 ]
 
 
+model_types = {
+    'sequence': BPM_LSTM_SEQUENCE,
+    'next_step': BPM_LSTM_NEXT_STEP
+}
+
+
 def main():
-    model_name = 'new_model'
+    model_type = 'next_step'
+    predictive_model = model_types[model_type]
     folds = 3
+    write_logs = False
+
+    print('model type:', model_type)
+    print('folds:', folds)
+    print('write logs:', write_logs)
 
     for log_name in log_names:
         print(log_name)
         log_filepath = '../data/' + log_name + '.csv'
 
-        lstm = BPM_LSTM(log_name, log_filepath, model_name)
+        lstm = predictive_model(log_name, log_filepath, write_logs)
 
         lstm.train(folds)
+
+    remove_unused_checkpoints()
 
 
 if __name__ == "__main__":

@@ -2,7 +2,6 @@ import csv
 from datetime import datetime
 
 import numpy as np
-from keras.utils import to_categorical
 
 
 def _find_dataset_limits(dataset, additional_features):
@@ -38,9 +37,11 @@ def _pad_dataset(dataset, additional_features, limits):
     padding_element_dataset = (max_activity_id + 1, max_resource_id + 1, 0)
     padding_element_additional_features = (0, 0, 0)
 
+    pad_limit = max_case_length
+
     for i in range(len(dataset)):
-        if len(dataset[i]) < max_case_length + 1:
-            for j in range(len(dataset[i]), max_case_length + 2):
+        if len(dataset[i]) < pad_limit + 1:
+            for j in range(len(dataset[i]), pad_limit + 2):
                 dataset[i].append(padding_element_dataset)
                 additional_features[i].append(padding_element_additional_features)
     return dataset, additional_features
@@ -112,33 +113,6 @@ def load_dataset_with_features(log_filepath, shuffle=True):
         additional_features = additional_features[shuffled_indexes]
 
     return dataset, additional_features, max_activity_id + 1, max_resource_id + 1
-
-
-def build_train_test_datasets(dataset, additional_features, max_activity_id, max_resource_id, test_split):
-    # activity_id, resource_id, time_since_case_start
-    dataset_elements = [to_categorical(dataset[..., 0], max_activity_id + 1),
-                        to_categorical(dataset[..., 1], max_resource_id + 1),
-                        dataset[..., 2:]]
-
-    additional_features = np.concatenate((additional_features[..., :2],
-                                          to_categorical(additional_features[..., 2], 7)), axis=-1)
-
-    split_index = int(dataset.shape[0] * test_split)
-
-    X_train = np.concatenate(dataset_elements, axis=-1)[split_index:, :-1]
-    X2_train = additional_features[split_index:, :-1]
-
-    Y_train = [dataset_elements[0][split_index:, 1:], dataset_elements[1][split_index:, 1:],
-               dataset_elements[2][split_index:, 1:]]
-
-    X_test = np.concatenate(dataset_elements, axis=-1)[:split_index, :-1]
-    X2_test = additional_features[:split_index, :-1]
-
-    return ([X_train, X2_train], Y_train), (X_test, X2_test)
-
-
-def discretize_softmax(sample):
-    return np.eye(sample.shape[-1])[np.argmax(sample, 2)]
 
 
 def save_results(output_filepath, model_scores):

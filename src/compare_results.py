@@ -1,6 +1,7 @@
 import csv
-from matplotlib import pyplot as plt
+
 import numpy as np
+from matplotlib import pyplot as plt
 
 log_names = [
     '10x5_1S',
@@ -16,13 +17,13 @@ log_names = [
     '10x20_3W',
     '10x20_3S',
     '10x2_1W',
-    # '10x2_1S',
-    # '10x2_3W',
-    # '10x2_3S',
-    # '50x5_1W',
-    # '50x5_1S',
-    # '50x5_3W',
-    # '50x5_3S'
+    '10x2_1S',
+    '10x2_3W',
+    '10x2_3S',
+    '50x5_1W',
+    '50x5_1S',
+    '50x5_3W',
+    '50x5_3S'
 ]
 
 # validation, accuracy, std
@@ -58,11 +59,11 @@ def _parse_scores(scores_filepath):
         line = next(csv_reader, None)
         resource_id_nlevenshtein = float(line[1])
         resource_id_nlevenshtein_std = float(line[2])
-    return (activity_id_accuracy, activity_id_std, resource_id_accuracy, resource_id_std, time_mse, time_std, activity_id_nlevenshtein, activity_id_nlevenshtein_std, resource_id_nlevenshtein, resource_id_nlevenshtein_std)
+    return activity_id_accuracy, activity_id_std, resource_id_accuracy, resource_id_std, time_mse, time_std, activity_id_nlevenshtein, activity_id_nlevenshtein_std, resource_id_nlevenshtein, resource_id_nlevenshtein_std
 
 
 def _plot_scores(scores):
-    bar_width = 0.4
+    bar_width = 0.2
     axis = np.arange(len(log_names))
 
     models = scores.keys()
@@ -72,7 +73,7 @@ def _plot_scores(scores):
     for i, model in enumerate(models):
         model_scores = np.array(scores[model])
         plt.bar(axis - bar_width / 2 * len(models) / 2 + i * bar_width, model_scores[:, 0], yerr=model_scores[:, 1], width=bar_width, label=model)
-        plt.ylim([0.8, 1])
+        plt.ylim([0.75, 1])
         plt.xticks(axis, log_names, rotation=90)
     plt.legend()
     plt.show()
@@ -116,6 +117,7 @@ def _plot_scores(scores):
     plt.legend()
     plt.show()
 
+
 def compare_models(models):
     scores = {}
 
@@ -128,7 +130,6 @@ def compare_models(models):
             scores[model].append(_parse_scores(results_filepath))
     _plot_scores(scores)
 
+
 if __name__ == "__main__":
-    model_1 = 'old_model'
-    model_2 = 'new_model'
-    compare_models([model_1, model_2])
+    compare_models(['old_model', 'new_model_v1', 'new_model_v2', 'new_model_v3'])
