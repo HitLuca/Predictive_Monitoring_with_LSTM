@@ -71,6 +71,7 @@ class BPM_LSTM_SEQUENCE(BPM_LSTM):
         kfold = ShuffleSplit(n_splits=folds, test_size=0.2)
         model_scores = {'validation': [],
                         'test': []}
+
         fold = 0
         for train_indexes, validation_indexes in kfold.split(self._X_train[0]):
             checkpoint_filepath = self._create_checkpoints_path(fold)
@@ -81,9 +82,9 @@ class BPM_LSTM_SEQUENCE(BPM_LSTM):
             history = self._train_model(checkpoint_filepath, log_path, train_indexes, validation_indexes)
             validation_scores = history.history
             model_scores['validation'].append(
-                (validation_scores['val_activity_id_categorical_accuracy'],
-                 validation_scores['val_resource_id_categorical_accuracy'],
-                 validation_scores['val_time_mean_squared_error']))
+                (validation_scores['val_activity_id_categorical_accuracy'][-1],
+                 validation_scores['val_resource_id_categorical_accuracy'][-1],
+                 validation_scores['val_time_mean_squared_error'][-1]))
 
             test_scores = self._evaluate_model_test()
             model_scores['test'].append(test_scores)

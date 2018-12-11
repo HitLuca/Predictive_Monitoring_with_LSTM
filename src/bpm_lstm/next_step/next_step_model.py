@@ -84,9 +84,9 @@ class BPM_LSTM_NEXT_STEP(BPM_LSTM):
             history = self._train_model(checkpoint_filepath, log_path, train_indexes, validation_indexes)
             validation_scores = history.history
             model_scores['validation'].append(
-                (validation_scores['val_activity_id_categorical_accuracy'],
-                 validation_scores['val_resource_id_categorical_accuracy'],
-                 validation_scores['val_time_mean_squared_error']))
+                (validation_scores['val_activity_id_categorical_accuracy'][-1],
+                 validation_scores['val_resource_id_categorical_accuracy'][-1],
+                 validation_scores['val_time_mean_squared_error'][-1]))
 
             test_scores = self._evaluate_model_test()
             model_scores['test'].append(test_scores)
@@ -94,5 +94,5 @@ class BPM_LSTM_NEXT_STEP(BPM_LSTM):
             fold += 1
         model_scores['validation'] = np.array(model_scores['validation'])
         model_scores['test'] = np.array(model_scores['test'])
-        print(model_scores)
+
         save_results(self._results_filepath, model_scores)
