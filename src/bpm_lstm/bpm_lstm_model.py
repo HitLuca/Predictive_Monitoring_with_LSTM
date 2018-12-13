@@ -6,7 +6,7 @@ from keras.callbacks import ModelCheckpoint, EarlyStopping, TensorBoard
 
 class BPM_LSTM(abc.ABC):
     def __init__(self, log_name, log_filepath, model_name, write_logs, output_filepath,
-                 logs_filepath, validation_split, test_split, test_prefix_size):
+                 logs_filepath, validation_split, test_split, test_prefix_size, epochs):
         self._model_type = NotImplemented
         self._model = NotImplemented
         self._X_train = NotImplemented
@@ -22,6 +22,7 @@ class BPM_LSTM(abc.ABC):
         self._validation_split = validation_split
         self._test_split = test_split
         self._test_prefix_size = test_prefix_size
+        self._epochs = epochs
 
     @abc.abstractmethod
     def _evaluate_model_test(self):
@@ -63,4 +64,4 @@ class BPM_LSTM(abc.ABC):
                                     self._Y_train[2][validation_indexes]]),
                                verbose=2,
                                callbacks=callbacks,
-                               epochs=300)
+                               epochs=self._epochs)

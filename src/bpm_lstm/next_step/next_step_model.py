@@ -11,10 +11,9 @@ from bpm_lstm.next_step.next_step_utils import build_train_test_datasets, discre
 # noinspection PyAttributeOutsideInit
 class BPM_LSTM_NEXT_STEP(BPM_LSTM):
     def __init__(self, log_name, log_filepath, write_logs, model_name='new_model_v1', output_filepath='../outputs',
-                 logs_filepath='logs/', validation_split=0.2, test_split=0.1, test_prefix_size=5, delete_last=4):
+                 logs_filepath='logs/', validation_split=0.2, test_split=0.1, test_prefix_size=5, epochs=300):
         super().__init__(log_name, log_filepath, model_name, write_logs, output_filepath,
-                         logs_filepath, validation_split, test_split, test_prefix_size)
-        self._delete_last = delete_last
+                         logs_filepath, validation_split, test_split, test_prefix_size, epochs)
         self._model_type = 'next_step'
         self._results_filepath = '/'.join(
             [self._output_filepath, self._model_type, self._model_name, self._log_name, ''])
@@ -31,8 +30,7 @@ class BPM_LSTM_NEXT_STEP(BPM_LSTM):
                     [predicted_trace, np.expand_dims(additional_features, 0)])
                 activity_id = discretize_softmax(activity_id)
                 resource_id = discretize_softmax(resource_id)
-                model_prediction = np.concatenate([activity_id, resource_id, time], axis=-1)
-                predicted_trace[:, i] = model_prediction[:, i]
+                predicted_trace[:, i] = np.concatenate([activity_id, resource_id, time], axis=-1)
 
             sample_activity = np.argmax(sample[:, :self._max_activity_id + 1], 1)
             sample_activity_string = ''.join(str(e) for e in sample_activity.tolist())
@@ -62,13 +60,12 @@ class BPM_LSTM_NEXT_STEP(BPM_LSTM):
         dataset, additional_features, self._max_activity_id, self._max_resource_id = load_dataset_with_features(
             self._log_filepath, shuffle=True)
 
-        (self._X_train, self._Y_train), (self._X_test, self._Y_test) = build_train_test_datasets(
+        (self._X_train, self._Y_train), self._X_test = build_train_test_datasets(
             dataset,
             additional_features,
             self._max_activity_id,
             self._max_resource_id,
-            self._test_split,
-            self._delete_last)
+            self._test_split)
 
         kfold = ShuffleSplit(n_splits=folds, test_size=0.2)
         model_scores = {'validation': [],

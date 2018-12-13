@@ -11,9 +11,9 @@ from bpm_lstm.sequence.sequence_utils import discretize_softmax, build_train_tes
 # noinspection PyAttributeOutsideInit
 class BPM_LSTM_SEQUENCE(BPM_LSTM):
     def __init__(self, log_name, log_filepath, write_logs, model_name='new_model_v2', output_filepath='../outputs',
-                 logs_filepath='logs/', validation_split=0.2, test_split=0.1, test_prefix_size=5):
+                 logs_filepath='logs/', validation_split=0.2, test_split=0.1, test_prefix_size=5, epochs=300):
         super().__init__(log_name, log_filepath, model_name, write_logs, output_filepath,
-                         logs_filepath, validation_split, test_split, test_prefix_size)
+                         logs_filepath, validation_split, test_split, test_prefix_size, epochs)
         self._model_type = 'sequence'
         self._results_filepath = '/'.join(
             [self._output_filepath, self._model_type, self._model_name, self._log_name, ''])
@@ -23,7 +23,7 @@ class BPM_LSTM_SEQUENCE(BPM_LSTM):
 
         for sample, additional_features in zip(self._X_test, self._X2_test):
             predicted_trace = np.expand_dims(np.zeros(sample.shape), 0)
-            predicted_trace[:, :self._test_prefix_size] = sample[:self._test_prefix_size:]
+            predicted_trace[:, :self._test_prefix_size] = sample[:self._test_prefix_size]
 
             for i in range(self._test_prefix_size, self._X_train[0].shape[1]):
                 activity_id, resource_id, time = self._model.predict(

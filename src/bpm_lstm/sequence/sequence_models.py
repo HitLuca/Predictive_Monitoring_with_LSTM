@@ -1,5 +1,6 @@
 from keras import Model, Input
-from keras.layers import TimeDistributed, Dropout, LeakyReLU, BatchNormalization, Dense, LSTM, Concatenate
+from keras.layers import TimeDistributed, Dropout, LeakyReLU, BatchNormalization, Dense, LSTM, Concatenate, Activation, \
+    Merge, Permute, RepeatVector, Flatten, CuDNNLSTM, Embedding, Average, GRU, CuDNNGRU
 from keras.optimizers import Nadam
 
 
@@ -151,9 +152,34 @@ class SequenceModels:
 
         processed = Concatenate()([model_input, additional_features_input])
 
-        processed = LSTM(64, return_sequences=True, activation='selu')(processed)
-        processed = LSTM(64, return_sequences=True, activation='selu')(processed)
-        processed = LSTM(64, return_sequences=True, activation='selu')(processed)
+        processed = LSTM(128, return_sequences=True)(processed)
+        processed = LSTM(128, return_sequences=True)(processed)
+        processed = LSTM(128, return_sequences=True)(processed)
+
+        activity_id_output = Dense(max_activity_id + 1, activation='softmax', name='activity_id')(processed)
+        resource_id_output = Dense(max_resource_id + 1, activation='softmax', name='resource_id')(processed)
+        time_output = Dense(1, activation='relu', name='time')(processed)
+
+        model = Model([model_input, additional_features_input],
+                      [activity_id_output, resource_id_output, time_output])
+
+        model.compile(loss={'activity_id': 'categorical_crossentropy',
+                            'resource_id': 'categorical_crossentropy',
+                            'time': 'mse'},
+                      metrics={'activity_id': 'categorical_accuracy',
+                               'resource_id': 'categorical_accuracy',
+                               'time': 'mse'},
+                      optimizer='adam')
+        return model
+
+    @staticmethod
+    def build_new_model_v5(X_train, max_activity_id, max_resource_id):
+        model_input = Input((X_train[0].shape[1:]))
+        additional_features_input = Input((X_train[1].shape[1:]))
+
+        processed = Concatenate()([model_input, additional_features_input])
+
+        processed = LSTM(512, return_sequences=True)(processed)
 
         activity_id_output = Dense(max_activity_id + 1, activation='softmax', name='activity_id')(processed)
         resource_id_output = Dense(max_resource_id + 1, activation='softmax', name='resource_id')(processed)
@@ -178,4 +204,5 @@ available_models = {
     'new_model_v2': SequenceModels.build_new_model_v2,
     'new_model_v3': SequenceModels.build_new_model_v3,
     'new_model_v4': SequenceModels.build_new_model_v4,
+    'new_model_v5': SequenceModels.build_new_model_v5,
 }

@@ -2,6 +2,7 @@ import csv
 
 import numpy as np
 from matplotlib import pyplot as plt
+import os
 
 log_names = [
     '10x5_1S',
@@ -23,18 +24,9 @@ log_names = [
     '50x5_1W',
     '50x5_1S',
     '50x5_3W',
-    '50x5_3S'
+    '50x5_3S',
+    'BPI2017_50k',
 ]
-
-# validation, accuracy, std
-# activity_id, 0.9108, 0.0016
-# resource_id, 0.8538, 0.0010
-# , time, mse, std
-# time, 0.0114, 0.0006)
-#
-# test, nlevenshtein, std
-# activity_id, 0.7542, 0.0071
-# resource_id, 0.8646, 0.0037
 
 
 def _parse_scores(scores_filepath):
@@ -62,74 +54,60 @@ def _parse_scores(scores_filepath):
     return activity_id_accuracy, activity_id_std, resource_id_accuracy, resource_id_std, time_mse, time_std, activity_id_nlevenshtein, activity_id_nlevenshtein_std, resource_id_nlevenshtein, resource_id_nlevenshtein_std
 
 
-def _plot_scores(scores):
+def plot_scores_figure(scores, index, title, top=1):
+    models = sorted(scores.keys())
+
     bar_width = 0.2
     axis = np.arange(len(log_names))
 
-    models = scores.keys()
-
     plt.figure()
-    plt.title('activity_id accuracy')
+    plt.title(title)
+
+    y_min = 1
+    y_max = 0
     for i, model in enumerate(models):
         model_scores = np.array(scores[model])
-        plt.bar(axis - bar_width / 2 * len(models) / 2 + i * bar_width, model_scores[:, 0], yerr=model_scores[:, 1], width=bar_width, label=model)
-        plt.ylim([0.75, 1])
-        plt.xticks(axis, log_names, rotation=90)
-    plt.legend()
-    plt.show()
+        plt.bar(axis - bar_width / 2 * len(models) / 2 + i * bar_width, model_scores[:, index], yerr=model_scores[:, index+1],
+                width=bar_width, label=model)
+        y_min_temp = np.min(model_scores[:, index])
+        y_max_temp = np.max(model_scores[:, index])
+        if y_min_temp < y_min:
+            y_min = y_min_temp
+        if y_max_temp > y_max:
+            y_max = y_max_temp
 
-    plt.figure()
-    plt.title('resource_id accuracy')
-    for i, model in enumerate(models):
-        model_scores = np.array(scores[model])
-        plt.bar(axis - bar_width / 2 * len(models) / 2 + i * bar_width, model_scores[:, 2], yerr=model_scores[:, 3], width=bar_width, label=model)
-        plt.ylim([0.6, 1])
-        plt.xticks(axis, log_names, rotation=90)
-    plt.legend()
-    plt.show()
+    if top > 0:
+        plt.ylim(top=top)
+    y_min -= 0.1 * (y_max - y_min)
+    plt.ylim(bottom=max(0, y_min))
 
-    plt.figure()
-    plt.title('time mse')
-    for i, model in enumerate(models):
-        model_scores = np.array(scores[model])
-        plt.bar(axis - bar_width / 2 * len(models) / 2 + i * bar_width, model_scores[:, 4], yerr=model_scores[:, 5], width=bar_width, label=model)
-        plt.xticks(axis, log_names, rotation=90)
-    plt.legend()
-    plt.show()
-
-    plt.figure()
-    plt.title('activity_id nlevenshtein')
-    for i, model in enumerate(models):
-        model_scores = np.array(scores[model])
-        plt.bar(axis - bar_width / 2 * len(models) / 2 + i * bar_width, model_scores[:, 6], yerr=model_scores[:, 7], width=bar_width, label=model)
-        plt.ylim([0.6, 1])
-        plt.xticks(axis, log_names, rotation=90)
-    plt.legend()
-    plt.show()
-
-    plt.figure()
-    plt.title('resource_id nlevenshtein')
-    for i, model in enumerate(models):
-        model_scores = np.array(scores[model])
-        plt.bar(axis - bar_width / 2 * len(models) / 2 + i * bar_width, model_scores[:, 8], yerr=model_scores[:, 9], width=bar_width, label=model)
-        plt.ylim([0.6, 1])
-        plt.xticks(axis, log_names, rotation=90)
+    plt.xticks(axis, log_names, rotation=90)
     plt.legend()
     plt.show()
 
 
-def compare_models(models):
+def _plot_scores(scores):
+    plot_scores_figure(scores, 0, 'activity_id_accuracy')
+    plot_scores_figure(scores, 2, 'resource_id accuracy')
+    plot_scores_figure(scores, 4, 'time mse', top=0)
+    plot_scores_figure(scores, 6, 'activity_id nlevenshtein')
+    plot_scores_figure(scores, 8, 'resource_id nlevenshtein')
+
+
+def compare_models(model_type):
     scores = {}
+
+    models = [f.name for f in os.scandir('/'.join(['..', 'outputs', model_type])) if f.is_dir()]
 
     for model in models:
         scores[model] = []
 
     for log_name in log_names:
         for model in models:
-            results_filepath = '/'.join(['..', 'outputs', 'sequence', model, log_name, 'results.csv'])
+            results_filepath = '/'.join(['..', 'outputs', model_type, model, log_name, 'results.csv'])
             scores[model].append(_parse_scores(results_filepath))
     _plot_scores(scores)
 
 
 if __name__ == "__main__":
-    compare_models(['old_model', 'new_model_v1', 'new_model_v2'])
+    compare_models('sequence')
